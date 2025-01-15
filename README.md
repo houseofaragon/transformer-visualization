@@ -1,50 +1,53 @@
-# React + TypeScript + Vite
+# Attention visualization using Transformers.js
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+I think it's so cool we can run models right in the browser
+thanks to huggingface's [transformer.js](https://github.com/huggingface/transformers.js?tab=readme-ov-file) and [ONNX runtime](https://onnxruntime.ai/)
 
-Currently, two official plugins are available:
+This app visualizes the attention maps from an image classification model.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Getting Started
+1. Install the necessary dependencies:
+    ```bash
+    npm install 
+    ```
 
-## Expanding the ESLint configuration
+2. Run the project:
+    ```bash
+    npm run dev 
+    ```
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+3. Build the project: 
+    ```bash
+    npm run build
+    ```
 
-- Configure the top-level `parserOptions` property like this:
+# Worker.js
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
+This is a background worker that is responsible for 
+1. Downloading the model
+2. Taking an image selected by a user and running it through the `AutoModelForImageClassification` and returning the attention maps.
+
+```javascript
+  const model_id = "onnx-community/dinov2-small-with-attentions";
+  const model = await AutoModelForImageClassification.from_pretrained(model_id, {
+    device: webgpu ? "webgpu" : "wasm",
+    dtype: webgpu ? "q4" : "q8",
+  })
+
+  // output
+  self.postMessage({
+    type: "output",
+    result: {
+    attentions: output,
+    label,
+    score,
+    modelConfig: model.config
     },
-  },
-})
+  });
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+# Main App
+The main app is written in react and uses one of my most favorite libraries ever written [React Three Fiber](https://r3f.docs.pmnd.rs/getting-started/examples). I adopted [this](https://codesandbox.io/p/sandbox/dc5fjy) example for my own use case.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+# Thanks
+Thank you so much to transformers.js and [this example](https://huggingface.co/spaces/webml-community/attention-visualization) from web-ml community that taught me so much.
